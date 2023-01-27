@@ -1,13 +1,9 @@
-# Sample Hardhat Project
+# The Ultiname NFT Repo
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+Contains 3 types of NFTs:
 
-Try running some of the following tasks:
-
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
-```
+1. A basic NFT
+2. IPFS hosted NFT
+   i. Uses randomness to generate a unique NFT
+3. SVG NFT (100% on-chain)
+   i. Uses Chainlink Price Feed to be dynamic
