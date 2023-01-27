@@ -2,32 +2,25 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { deployments, ethers, network } from "hardhat";
 import { developmentChains } from "../../helper-hardhat-config";
-import { Lock } from "../../typechain-types";
+import { BasicNFT } from "../../typechain-types";
 
 !developmentChains.includes(network.name)
   ? describe.skip
   : describe("Lock", async () => {
-      let lock: Lock, deployer: SignerWithAddress;
-
-      const name = "Lock";
+      let basicNFT: BasicNFT, deployer: SignerWithAddress;
 
       beforeEach(async () => {
         const accounts = await ethers.getSigners();
         deployer = accounts[0];
         await deployments.fixture(["all"]);
 
-        lock = await ethers.getContract("Lock", deployer);
+        basicNFT = await ethers.getContract("BasicNFT", deployer);
       });
 
       describe("constructor()", () => {
         it("sets the owner addresses correctly", async () => {
-          const txnResponse = await lock.getOwner();
+          const txnResponse = await basicNFT.getOwner();
           expect(txnResponse).to.equal(deployer.address);
-        });
-
-        it("sets the name correctly", async () => {
-          const txnResponse = await lock.getName();
-          expect(txnResponse).to.include(name);
         });
       });
     });

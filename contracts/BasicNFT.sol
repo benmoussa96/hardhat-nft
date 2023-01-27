@@ -4,27 +4,21 @@ pragma solidity ^0.8.10;
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 
-error Lock__NotOwner();
+error BasicNFT__NotOwner();
 
-contract Lock {
+contract BasicNFT {
     address private immutable i_owner;
-    string private name;
 
     modifier onlyOwner() {
-        if (msg.sender != i_owner) { revert Lock__NotOwner(); }
+        if (msg.sender != i_owner) { revert BasicNFT__NotOwner(); }
         _;
     }
 
-    constructor(string memory _name) {
+    constructor() {
         i_owner = msg.sender;
-        name = _name;
     }
     
     function getOwner() public view returns (address) {
       return i_owner;
-    }
-    
-    function getName() public view returns (string memory) {
-      return name;
     }
 }
