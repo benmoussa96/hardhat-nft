@@ -8,6 +8,8 @@ import { BasicNFT } from "../../typechain-types";
   ? describe.skip
   : describe("Lock", async () => {
       let basicNFT: BasicNFT, deployer: SignerWithAddress;
+      const name = "Dogie";
+      const symbol = "DOG";
 
       beforeEach(async () => {
         const accounts = await ethers.getSigners();
@@ -18,9 +20,19 @@ import { BasicNFT } from "../../typechain-types";
       });
 
       describe("constructor()", () => {
-        it("sets the owner addresses correctly", async () => {
-          const txnResponse = await basicNFT.getOwner();
-          expect(txnResponse).to.equal(deployer.address);
+        it("sets the name correctly", async () => {
+          const txnResponse = await basicNFT.name();
+          expect(txnResponse).to.equal(name);
+        });
+
+        it("sets the symbol correctly", async () => {
+          const txnResponse = await basicNFT.symbol();
+          expect(txnResponse).to.equal(symbol);
+        });
+
+        it("sets the counter correctly", async () => {
+          const txnResponse = await basicNFT.getTokenCounter();
+          expect(txnResponse).to.equal(0);
         });
       });
     });
