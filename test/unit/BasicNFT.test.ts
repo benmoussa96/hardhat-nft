@@ -35,4 +35,28 @@ import { BasicNFT } from "../../typechain-types";
           expect(txnResponse).to.equal(0);
         });
       });
+
+      describe("mintNft()", () => {
+        beforeEach(async () => {
+          const txnResponse = await basicNFT.mintNft();
+          await txnResponse.wait(1);
+        });
+
+        it("Allows users to mint an NFT, and updates appropriately", async () => {
+          const tokenURI = await basicNFT.tokenURI(0);
+          const tokenCounter = await basicNFT.getTokenCounter();
+
+          expect(tokenCounter).to.equal(1);
+          expect(tokenURI).to.equal(await basicNFT.TOKEN_URI());
+        });
+
+        it("Show the correct balance and owner of an NFT", async () => {
+          const ownerAddress = deployer.address;
+          const ownerBalance = await basicNFT.balanceOf(ownerAddress);
+          const owner = await basicNFT.ownerOf("0");
+
+          expect(ownerBalance, toString()).to.equal("1");
+          expect(owner).to.equal(ownerAddress);
+        });
+      });
     });
