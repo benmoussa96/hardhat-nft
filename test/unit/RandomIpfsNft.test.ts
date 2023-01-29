@@ -16,6 +16,8 @@ import { RandomIpfsNft } from "../../typechain-types";
         deployer = accounts[0];
         await deployments.fixture(["all"]);
 
+        process.env.UPLOAD_TO_PINATA = "false";
+
         randomIpfsNft = await ethers.getContract("RandomIpfsNft", deployer);
       });
 
@@ -35,4 +37,25 @@ import { RandomIpfsNft } from "../../typechain-types";
           expect(txnResponse).to.equal(0);
         });
       });
+
+      describe("requestNft()", async () => {
+        it("fails if payment isn't sent with the request", async () => {
+          await expect(randomIpfsNft.requestNft()).to.be.revertedWithCustomError(
+            randomIpfsNft,
+            "RandomIpfsNft__NotEnoughEthToPayFee"
+          );
+        });
+
+        it("emits an event and kicks off a random word request", async () => {
+          const fee = await randomIpfsNft.getMintFee();
+          await expect(randomIpfsNft.requestNft({ value: fee })).to.emit(
+            randomIpfsNft,
+            "NftRequested"
+          );
+        });
+      });
+
+      //   describe("fulfillRandomWords()", async () => {
+      //     it("mints NFT after random number returned", async () => {});
+      //   });
     });
