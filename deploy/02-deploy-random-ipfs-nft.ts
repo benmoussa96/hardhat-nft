@@ -3,8 +3,22 @@ import { DeployFunction } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { developmentChains, networkConfig } from "../helper-hardhat-config";
 import verify from "../utils/verify";
+import { storeImages } from "../utils/uploadToPinata";
 
 const VRF_SUB_FUND_AMOUNT = ethers.utils.parseEther("2");
+const IMAGES_LOCATION = "./images/randomNFT";
+
+const METADATA_TEMPLATE = {
+  name: "",
+  description: "",
+  image: "",
+  attributes: [
+    {
+      trait_type: "Cuteness",
+      value: 100,
+    },
+  ],
+};
 
 const deployRandomIpfsNft: DeployFunction = async function ({
   getNamedAccounts,
@@ -15,7 +29,7 @@ const deployRandomIpfsNft: DeployFunction = async function ({
   const { deployer } = await getNamedAccounts();
   const chainId: number = network.config.chainId!;
 
-  let vrfCoordinatorV2Address, vrfCoordinatorV2Mock, subId;
+  let vrfCoordinatorV2Address, vrfCoordinatorV2Mock, subId, dogTokenUris;
 
   if (developmentChains.includes(network.name)) {
     vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock");
@@ -30,9 +44,14 @@ const deployRandomIpfsNft: DeployFunction = async function ({
     subId = networkConfig[chainId].subscriptionId;
   }
 
+  if (process.env.UPLOAD_TO_PINATA) {
+    dogTokenUris = await handleTokenUris();
+  } else {
+    dogTokenUris = networkConfig[chainId].dogTokenUris;
+  }
+
   const gasLane = networkConfig[chainId].gasLane;
   const callbackGasLimit = networkConfig[chainId].callbackGasLimit;
-  const dogTokenUris = networkConfig[chainId].dogTokenUris;
   const mintFee = networkConfig[chainId].mintFee;
 
   const args = [
@@ -56,6 +75,24 @@ const deployRandomIpfsNft: DeployFunction = async function ({
   } else if (process.env.ETHERSCAN_API_KEY) {
     await verify(randomIpfsNft.address, args);
   }
+};
+
+const handleTokenUris = async () => {
+  let tokenUris = [""];
+
+  // Store images in IPFS
+  const { responses: imageUploadResponses, images } = await storeImages(IMAGES_LOCATION);
+
+  for (const i in imageUploadResponses) {
+    // Create the metadata
+    let tokenUriMetadata = { ...METADATA_TEMPLATE };
+    tokenUriMetadata.name = images[i].replace(".png", "");
+    tokenUriMetadata.description = `An adorable ${tokenUriMetadata.name} puppy!`;
+    tokenUriMetadata.image = `ipfs://${imageUploadResponses[i].IpfsHash}`;
+    // Store the metadata in IPFS
+  }
+
+  return tokenUris;
 };
 
 export default deployRandomIpfsNft;
