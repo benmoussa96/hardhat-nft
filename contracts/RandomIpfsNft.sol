@@ -3,6 +3,9 @@ pragma solidity ^0.8.10;
 
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+
+error RandomIpfsNft__RangeOutOfBounds();
 
 /**
  * @title RandomIpfsNft
@@ -16,7 +19,14 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
  * Users have to pay to mint the NFT
  * Contract owner can withdraw ETH
  */
-contract RandomIpfsNft is VRFConsumerBaseV2 {
+contract RandomIpfsNft is VRFConsumerBaseV2, ERC721 {
+    // Types
+    enum Breed {
+        PUB,
+        SHIBA_INU,
+        ST_BERNARD
+    }
+
     // Chainlink VRF Variables
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     bytes32 private immutable i_gasLane;
@@ -28,6 +38,10 @@ contract RandomIpfsNft is VRFConsumerBaseV2 {
     // VRF Helpers
     mapping(uint256 => address) public s_requestIdToSender;
 
+    // NFT Variables
+    uint256 public s_tokenCounter;
+    uint256 public constant MAX_PROBABILITY = 100;
+
     // Events
     event NftRequested(uint256 indexed requestId, address requester);
 
@@ -36,7 +50,7 @@ contract RandomIpfsNft is VRFConsumerBaseV2 {
         uint64 subscriptionId,
         bytes32 gasLane,
         uint32 callbackGasLimit
-    ) VRFConsumerBaseV2(vrfCoordinatorV2) {
+    ) VRFConsumerBaseV2(vrfCoordinatorV2) ERC721("Randon IPFS NFT", "RIN") {
         i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
         i_subscriptionId = subscriptionId;
         i_gasLane = gasLane;
@@ -60,7 +74,33 @@ contract RandomIpfsNft is VRFConsumerBaseV2 {
     function fulfillRandomWords(
         uint256 requestId,
         uint256[] memory randomWords
-    ) internal override {}
+    ) internal override {
+        address nftOwner = s_requestIdToSender[requestId];
+        uint256 newTokenId = s_tokenCounter;
 
-    function tokenURI(uint256) public {}
+        _safeMint(nftOwner, newTokenId);
+    }
+
+    function getDogBreedFromModdedRng(uint256 moddedRng) public pure returns (Breed) {
+        uint256 sum = 0;
+        uint256[3] memory probArray = getProbabilityArray();
+
+        for (uint256 i = 0; i < probArray.length; i++) {
+            if (moddedRng >= sum && moddedRng < (sum + probArray[i])) {
+                return Breed(i);
+            }
+            sum += probArray[i];
+        }
+
+        revert RandomIpfsNft__RangeOutOfBounds();
+    }
+
+    function getProbabilityArray() public pure returns (uint256[3] memory) {
+        // Pug: 0 - 9  (10%)
+        // Shiba Inu: 10 - 39  (30%)
+        // St. Bernard: 40 - 99 (60%)
+        return [10, 30, MAX_PROBABILITY];
+    }
+
+    function tokenURI(uint256) public view override returns (string memory) {}
 }
