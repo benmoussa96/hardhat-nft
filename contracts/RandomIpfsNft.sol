@@ -51,10 +51,10 @@ contract RandomIpfsNft is VRFConsumerBaseV2 {
             i_callbackGasLimit,
             NUM_WORDS
         );
-        
+
         s_requestIdToSender[requestId] = msg.sender;
 
-        emit NftRequested(requestId, msg.sender)
+        emit NftRequested(requestId, msg.sender);
     }
 
     function fulfillRandomWords(
