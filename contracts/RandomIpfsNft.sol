@@ -17,12 +17,19 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
  * Contract owner can withdraw ETH
  */
 contract RandomIpfsNft is VRFConsumerBaseV2 {
+    // Chainlink VRF Variables
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     bytes32 private immutable i_gasLane;
     uint64 private immutable i_subscriptionId;
     uint32 private immutable i_callbackGasLimit;
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
+
+    // VRF Helpers
+    mapping(uint256 => address) public s_requestIdToSender;
+
+    // Events
+    event NftRequested(uint256 indexed requestId, address requester);
 
     constructor(
         address vrfCoordinatorV2,
@@ -36,7 +43,19 @@ contract RandomIpfsNft is VRFConsumerBaseV2 {
         i_callbackGasLimit = callbackGasLimit;
     }
 
-    function requestNft() public {}
+    function requestNft() public returns (uint256 requestId) {
+        requestId = i_vrfCoordinator.requestRandomWords(
+            i_gasLane,
+            i_subscriptionId,
+            REQUEST_CONFIRMATIONS,
+            i_callbackGasLimit,
+            NUM_WORDS
+        );
+        
+        s_requestIdToSender[requestId] = msg.sender;
+
+        emit NftRequested(requestId, msg.sender)
+    }
 
     function fulfillRandomWords(
         uint256 requestId,
