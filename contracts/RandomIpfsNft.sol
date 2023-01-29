@@ -49,6 +49,7 @@ contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage, Ownable {
 
     // Events
     event NftRequested(uint256 indexed requestId, address requester);
+    event NftMinted(Breed breed, address minter);
 
     constructor(
         address vrfCoordinatorV2,
@@ -94,6 +95,8 @@ contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage, Ownable {
 
         _safeMint(nftOwner, tokenId);
         _setTokenURI(tokenId, s_dogTokenUris[uint256(dogBreed)]);
+
+        emit NftMinted(dogBreed, nftOwner);
     }
 
     function withdraw() public onlyOwner {
