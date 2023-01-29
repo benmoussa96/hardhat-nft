@@ -19,6 +19,7 @@ export const storeImages = async (imagesFilePath: string) => {
 
   let responses = [];
   for (const i in images) {
+    console.log(`Uploading ${images[i]} to IPFS...`);
     const imageReadableStream = fs.createReadStream(`${fullImagesPath}/${images[i]}`);
     try {
       const pinataResponse = await pinata.pinFileToIPFS(imageReadableStream, {
@@ -26,7 +27,7 @@ export const storeImages = async (imagesFilePath: string) => {
       });
       responses.push(pinataResponse);
     } catch (error) {
-      console.log(error, i);
+      console.log(error);
     }
   }
 
@@ -34,13 +35,16 @@ export const storeImages = async (imagesFilePath: string) => {
 };
 
 export const storeTokenUriMetadata = async (metadata: Metadata) => {
+  const name = `${metadata.name}.json`;
+  console.log(`Uploading ${name} to IPFS...`);
+
   try {
     const response = await pinata.pinJSONToIPFS(metadata, {
-      pinataMetadata: { name: `${metadata.name}.json` },
+      pinataMetadata: { name },
     });
     return response;
   } catch (error) {
-    console.log(error, metadata);
+    console.log(error);
   }
 
   return null;
