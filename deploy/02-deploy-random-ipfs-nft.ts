@@ -3,7 +3,7 @@ import { DeployFunction } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { developmentChains, networkConfig } from "../helper-hardhat-config";
 import verify from "../utils/verify";
-import { storeImages } from "../utils/uploadToPinata";
+import { storeImages, storeTokenUriMetadata } from "../utils/uploadToPinata";
 
 const VRF_SUB_FUND_AMOUNT = ethers.utils.parseEther("2");
 const IMAGES_LOCATION = "./images/randomNFT";
@@ -46,6 +46,7 @@ const deployRandomIpfsNft: DeployFunction = async function ({
 
   if (process.env.UPLOAD_TO_PINATA) {
     dogTokenUris = await handleTokenUris();
+    console.log("dogTokenUris:", dogTokenUris);
   } else {
     dogTokenUris = networkConfig[chainId].dogTokenUris;
   }
@@ -78,7 +79,7 @@ const deployRandomIpfsNft: DeployFunction = async function ({
 };
 
 const handleTokenUris = async () => {
-  let tokenUris = [""];
+  let tokenUris = [];
 
   // Store images in IPFS
   const { responses: imageUploadResponses, images } = await storeImages(IMAGES_LOCATION);
@@ -89,7 +90,11 @@ const handleTokenUris = async () => {
     tokenUriMetadata.name = images[i].replace(".png", "");
     tokenUriMetadata.description = `An adorable ${tokenUriMetadata.name} puppy!`;
     tokenUriMetadata.image = `ipfs://${imageUploadResponses[i].IpfsHash}`;
+
     // Store the metadata in IPFS
+    const metadataUploadResponse = await storeTokenUriMetadata(tokenUriMetadata);
+
+    tokenUris.push(`ipfs://${metadataUploadResponse!.IpfsHash}`);
   }
 
   return tokenUris;
