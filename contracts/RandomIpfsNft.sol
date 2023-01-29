@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 error RandomIpfsNft__RangeOutOfBounds();
 
@@ -19,7 +19,7 @@ error RandomIpfsNft__RangeOutOfBounds();
  * Users have to pay to mint the NFT
  * Contract owner can withdraw ETH
  */
-contract RandomIpfsNft is VRFConsumerBaseV2, ERC721 {
+contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage {
     // Types
     enum Breed {
         PUB,
@@ -40,7 +40,8 @@ contract RandomIpfsNft is VRFConsumerBaseV2, ERC721 {
 
     // NFT Variables
     uint256 public s_tokenCounter;
-    uint256 public constant MAX_PROBABILITY = 100;
+    uint256 internal constant MAX_PROBABILITY = 100;
+    string[3] internal s_dogTokenUris;
 
     // Events
     event NftRequested(uint256 indexed requestId, address requester);
@@ -49,12 +50,14 @@ contract RandomIpfsNft is VRFConsumerBaseV2, ERC721 {
         address vrfCoordinatorV2,
         uint64 subscriptionId,
         bytes32 gasLane,
-        uint32 callbackGasLimit
+        uint32 callbackGasLimit,
+        string[3] memory dogTokenUris
     ) VRFConsumerBaseV2(vrfCoordinatorV2) ERC721("Randon IPFS NFT", "RIN") {
         i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
         i_subscriptionId = subscriptionId;
         i_gasLane = gasLane;
         i_callbackGasLimit = callbackGasLimit;
+        s_dogTokenUris = dogTokenUris;
     }
 
     function requestNft() public returns (uint256 requestId) {
@@ -76,12 +79,16 @@ contract RandomIpfsNft is VRFConsumerBaseV2, ERC721 {
         uint256[] memory randomWords
     ) internal override {
         address nftOwner = s_requestIdToSender[requestId];
-        uint256 newTokenId = s_tokenCounter;
+        uint256 tokenId = s_tokenCounter;
 
-        _safeMint(nftOwner, newTokenId);
+        uint256 moddedRng = randomWords[0] % MAX_PROBABILITY;
+        Breed dogBreed = getBreedFromModdedRng(moddedRng);
+
+        _safeMint(nftOwner, tokenId);
+        _setTokenURI(tokenId, s_dogTokenUris[uint256(dogBreed)]);
     }
 
-    function getDogBreedFromModdedRng(uint256 moddedRng) public pure returns (Breed) {
+    function getBreedFromModdedRng(uint256 moddedRng) public pure returns (Breed) {
         uint256 sum = 0;
         uint256[3] memory probArray = getProbabilityArray();
 
