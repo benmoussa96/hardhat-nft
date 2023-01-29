@@ -6,7 +6,7 @@ import { BasicNFT } from "../../typechain-types";
 
 !developmentChains.includes(network.name)
   ? describe.skip
-  : describe("Lock", async () => {
+  : describe("BasicNFT", async () => {
       let basicNFT: BasicNFT, deployer: SignerWithAddress;
       const name = "Dogie";
       const symbol = "DOG";
