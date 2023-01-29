@@ -2,6 +2,13 @@ import pinataSDK from "@pinata/sdk";
 import path from "path";
 import fs from "fs";
 
+interface Metadata {
+  name: string;
+  description: string;
+  image: string;
+  attributes: {}[];
+}
+
 const PINATA_API_KEY = process.env.PINATA_API_KEY;
 const PINATA_API_SECRET = process.env.PINATA_API_SECRET;
 const pinata = new pinataSDK(PINATA_API_KEY, PINATA_API_SECRET);
@@ -26,9 +33,11 @@ export const storeImages = async (imagesFilePath: string) => {
   return { responses, images };
 };
 
-export const storeTokenUriMetadata = async (metadata: Object) => {
+export const storeTokenUriMetadata = async (metadata: Metadata) => {
   try {
-    const response = await pinata.pinJSONToIPFS(metadata);
+    const response = await pinata.pinJSONToIPFS(metadata, {
+      pinataMetadata: { name: `${metadata.name}.json` },
+    });
     return response;
   } catch (error) {
     console.log(error, metadata);
