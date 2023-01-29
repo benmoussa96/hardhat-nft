@@ -4,9 +4,11 @@ pragma solidity ^0.8.10;
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 error RandomIpfsNft__RangeOutOfBounds();
 error RandomIpfsNft__NotEnoughEthToPayFee();
+error RandomIpfsNft__WithdrawFailed();
 
 /**
  * @title RandomIpfsNft
@@ -20,7 +22,7 @@ error RandomIpfsNft__NotEnoughEthToPayFee();
  * Users have to pay to mint the NFT
  * Contract owner can withdraw ETH
  */
-contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage {
+contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage, Ownable {
     // Types
     enum Breed {
         PUB,
@@ -92,6 +94,13 @@ contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage {
 
         _safeMint(nftOwner, tokenId);
         _setTokenURI(tokenId, s_dogTokenUris[uint256(dogBreed)]);
+    }
+
+    function withdraw() public onlyOwner {
+        uint256 amount = address(this).balance;
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+
+        if (!success) revert RandomIpfsNft__WithdrawFailed();
     }
 
     function getBreedFromModdedRng(uint256 moddedRng) public pure returns (Breed) {
