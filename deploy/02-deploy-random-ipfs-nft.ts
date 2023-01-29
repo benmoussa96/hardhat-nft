@@ -44,7 +44,7 @@ const deployRandomIpfsNft: DeployFunction = async function ({
     subId = networkConfig[chainId].subscriptionId;
   }
 
-  if (process.env.UPLOAD_TO_PINATA) {
+  if (process.env.UPLOAD_TO_PINATA == "true") {
     dogTokenUris = await handleTokenUris();
     console.log("dogTokenUris:", dogTokenUris);
   } else {
