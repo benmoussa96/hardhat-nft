@@ -64,7 +64,10 @@ import { RandomIpfsNft, VRFCoordinatorV2Mock } from "../../typechain-types";
           await new Promise<void>(async (resolve, reject) => {
             randomIpfsNft.once("NftMinted", async () => {
               try {
-                // Write Tests Here !!!!!!!
+                const tokenUri = await randomIpfsNft.tokenURI(0);
+                const tokenCounter = await randomIpfsNft.getTokenCounter();
+                expect(tokenUri.toString().includes("ipfs://")).to.be.true;
+                expect(tokenCounter).to.equal(1);
                 resolve();
               } catch (error) {
                 reject(error);
