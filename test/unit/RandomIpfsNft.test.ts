@@ -1,13 +1,16 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { rejects } from "assert";
 import { expect } from "chai";
 import { deployments, ethers, network } from "hardhat";
 import { developmentChains } from "../../helper-hardhat-config";
-import { RandomIpfsNft } from "../../typechain-types";
+import { RandomIpfsNft, VRFCoordinatorV2Mock } from "../../typechain-types";
 
 !developmentChains.includes(network.name)
   ? describe.skip
   : describe("RandomIpfsNft", async () => {
-      let randomIpfsNft: RandomIpfsNft, deployer: SignerWithAddress;
+      let randomIpfsNft: RandomIpfsNft,
+        deployer: SignerWithAddress,
+        vrfCoordinatorV2Mock: VRFCoordinatorV2Mock;
       const name = "Random IPFS NFT";
       const symbol = "RIN";
 
@@ -19,6 +22,7 @@ import { RandomIpfsNft } from "../../typechain-types";
         process.env.UPLOAD_TO_PINATA = "false";
 
         randomIpfsNft = await ethers.getContract("RandomIpfsNft", deployer);
+        vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock", deployer);
       });
 
       describe("constructor()", () => {
@@ -55,7 +59,31 @@ import { RandomIpfsNft } from "../../typechain-types";
         });
       });
 
-      //   describe("fulfillRandomWords()", async () => {
-      //     it("mints NFT after random number returned", async () => {});
-      //   });
+      describe("fulfillRandomWords()", async () => {
+        it("mints NFT after random number returned", async () => {
+          await new Promise<void>(async (resolve, reject) => {
+            randomIpfsNft.once("NftMinted", async () => {
+              try {
+                // Write Tests Here !!!!!!!
+                resolve();
+              } catch (error) {
+                reject(error);
+              }
+            });
+
+            try {
+              const fee = await randomIpfsNft.getMintFee();
+              const txnResponse = await randomIpfsNft.requestNft({ value: fee });
+              const txnReceipt = await txnResponse.wait(1);
+              await vrfCoordinatorV2Mock.fulfillRandomWords(
+                txnReceipt.events![1].args!.requestId,
+                randomIpfsNft.address
+              );
+            } catch (error) {
+              console.log(error);
+              reject(error);
+            }
+          });
+        });
+      });
     });
